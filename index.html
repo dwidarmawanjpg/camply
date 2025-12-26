@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAMPLY V5.2 - Marketplace Alat Camping</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        
+        .store-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .item-card:hover { border-color: #16a34a; }
+        .testimonial-card { transition: transform 0.3s; }
+        .testimonial-card:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- DATABASE DUMMY ---
+        const BANNERS = [
+            { id: 1, title: "Sewa Tanpa Ribet", subtitle: "Cari, Booking, Ambil. Semudah itu.", image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=800", isAd: false },
+            { id: 2, title: "Promo Toko Baru", subtitle: "Diskon 10% di Mount Trekker Bali", image: "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&q=80&w=800", isAd: true },
+        ];
+
+        const STORES = [
+            {
+                id: "CMP",
+                name: "Camply Official Store",
+                rating: 4.9,
+                distance: 1.2,
+                address: "Jl. Udayana No. 11, Singaraja (Kampus Undiksha)",
+                mapsUrl: "https://goo.gl/maps/xyz",
+                hours: "08:00 - 22:00",
+                description: "Toko resmi Camply dengan koleksi alat terbaru dan terawat. Lokasi strategis dekat kampus.",
+                image: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&q=80&w=600",
+                items: [
+                    { id: 101, name: "Tenda Arei (Kap 4)", price: 50000, stock: 5, category: "Tenda", min: 1, max: 5, image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&q=80&w=400" },
+                    { id: 102, name: "Carrier Eiger 60L", price: 45000, stock: 2, category: "Tas", min: 1, max: 2, image: "https://images.unsplash.com/photo-1622473590773-7c5e533b6323?auto=format&fit=crop&q=80&w=400" },
+                    { id: 103, name: "Kompor Portable", price: 20000, stock: 10, category: "Masak", min: 1, max: 5, image: "https://images.unsplash.com/photo-1595963284564-9b8822987176?auto=format&fit=crop&q=80&w=400" }
+                ]
+            },
+            {
+                id: "MTB",
+                name: "Mount Trekker Bali",
+                rating: 4.7,
+                distance: 3.5,
+                address: "Jl. A. Yani No. 88, Singaraja",
+                mapsUrl: "https://goo.gl/maps/abc",
+                hours: "09:00 - 21:00",
+                description: "Spesialis alat pendakian gunung profesional. Menyediakan paket hemat untuk pemula.",
+                image: "https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&q=80&w=600",
+                items: [
+                    { id: 201, name: "Tenda Consina (Kap 2)", price: 35000, stock: 8, category: "Tenda", min: 1, max: 3, image: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=400" },
+                    { id: 202, name: "Sleeping Bag Polar", price: 15000, stock: 20, category: "Tidur", min: 1, max: 10, image: "https://images.unsplash.com/photo-1629248457639-50c550df4722?auto=format&fit=crop&q=80&w=400" },
+                    { id: 203, name: "Sepatu Trekking (42)", price: 40000, stock: 1, category: "Aksesoris", min: 1, max: 1, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=400" }
+                ]
+            },
+            {
+                id: "AGS",
+                name: "Adventure Gear SGR",
+                rating: 4.5,
+                distance: 5.0,
+                address: "Jl. Serma Karma, Baktiseraga",
+                mapsUrl: "https://goo.gl/maps/def",
+                hours: "07:00 - 20:00",
+                description: "Toko perlengkapan outdoor terlengkap di Baktiseraga. Buka pagi hari.",
+                image: "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&q=80&w=600",
+                items: [
+                    { id: 301, name: "Matras Foil", price: 5000, stock: 50, category: "Tidur", min: 1, max: 10, image: "https://images.unsplash.com/photo-1628608293774-672584501239?auto=format&fit=crop&q=80&w=400" },
+                    { id: 302, name: "Headlamp LED", price: 10000, stock: 15, category: "Aksesoris", min: 1, max: 5, image: "https://images.unsplash.com/photo-1563814882173-5cb7838501c5?auto=format&fit=crop&q=80&w=400" }
+                ]
+            }
+        ];
+
+        const TESTIMONIALS = [
+            { name: "Budi Santoso", text: "Camply Official Store barangnya lengkap banget, tenda bersih wangi.", rating: 5, store: "Camply Official Store" },
+            { name: "Siti Aminah", text: "Mount Trekker pelayanannya ramah, dapet diskon juga karena member baru.", rating: 5, store: "Mount Trekker Bali" },
+            { name: "Agus Wijaya", text: "Adventure Gear buka pagi banget, ngebantu pas butuh gas mendadak.", rating: 4, store: "Adventure Gear SGR" }
+        ];
+
+        const USER_PROFILE_MOCK = {
+            name: "Melia Putri",
+            phone: "08123456789",
+            dob: "2003-05-15",
+            address: "Jl. Bisma No. 45, Singaraja",
+            password: "Password1!"
+        };
+
+        // --- UTILS ---
+        const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        const formatDateIndo = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        };
+
+        // --- COMPONENTS ---
+
+        // 1. AUTH SCREEN
+        const AuthScreen = ({ onLogin }) => {
+            const [mode, setMode] = useState('login');
+            const [formData, setFormData] = useState({ name: "", phone: "", password: "", confirmPassword: "" });
+            const [error, setError] = useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError("");
+                if (mode === 'login') {
+                    if (formData.phone === "08123456789" && formData.password === "1234") onLogin();
+                    else setError("Akun Demo: 08123456789 / 1234");
+                } else {
+                    if (formData.password !== formData.confirmPassword) return setError("Password tidak sama");
+                    if (formData.password.length < 8) return setError("Password min 8 karakter");
+                    alert("Registrasi Berhasil!");
+                    setMode('login');
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1517824806704-9040b037703b?auto=format&fit=crop&q=80&w=2000" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative z-10 fade-in border-t-4 border-green-600">
+                        <h1 className="text-3xl font-extrabold text-slate-800 text-center mb-6">CAMPLY<span className="text-green-600">.ID</span></h1>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {mode === 'register' && <input type="text" className="w-full p-3 border rounded-lg" placeholder="Nama Lengkap" onChange={e => setFormData({...formData, name: e.target.value})} required />}
+                            <input type="text" className="w-full p-3 border rounded-lg" placeholder="Nomor WhatsApp" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
+                            <input type="password" className="w-full p-3 border rounded-lg" placeholder="Kata Sandi" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
+                            {mode === 'register' && <input type="password" className="w-full p-3 border rounded-lg" placeholder="Konfirmasi Sandi" onChange={e => setFormData({...formData, confirmPassword: e.target.value})} required />}
+                            {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+                            <button className="w-full bg-green-700 text-white font-bold py-3 rounded-lg hover:bg-green-800">{mode === 'login' ? 'Masuk' : 'Daftar'}</button>
+                        </form>
+                        <p className="text-center mt-4 text-sm text-slate-600">
+                            {mode === 'login' ? 'Belum punya akun?' : 'Sudah punya akun?'} <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="text-green-600 font-bold">{mode === 'login' ? 'Daftar' : 'Masuk'}</button>
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SUB-COMPONENTS FOR VIEWS ---
+
+        // 2. PROFILE VIEW
+        const ProfileView = ({ userProfile, setUserProfile }) => {
+            const [editMode, setEditMode] = useState(false);
+            const [profile, setProfile] = useState({...userProfile});
+            const [pass, setPass] = useState({cur:"", new:""});
+            
+            const saveProfile = () => { setUserProfile(profile); setEditMode(false); alert("Tersimpan!"); };
+            const savePass = () => {
+                const regex = /^(?=.*[a-z])(?=.*[\d\W]).{8,}$/;
+                if(pass.cur !== userProfile.password) return alert("Sandi lama salah");
+                if(!regex.test(pass.new)) return alert("Password minimal 8 karakter, ada huruf kecil & angka/simbol.");
+                setUserProfile({...userProfile, password: pass.new});
+                setPass({cur:"", new:""});
+                alert("Password diubah!");
+            };
+
+            return (
+                <div className="max-w-xl mx-auto px-4 py-8 fade-in">
+                    <h2 className="text-2xl font-bold mb-6">Profil Saya</h2>
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
+                        <div className="flex justify-between mb-4">
+                            <h3 className="font-bold text-lg">Biodata Diri</h3>
+                            <button onClick={()=>setEditMode(!editMode)} className="text-blue-600 font-bold text-sm">{editMode?'Batal':'Edit'}</button>
+                        </div>
+                        <div className="space-y-3">
+                            <input disabled={!editMode} value={profile.name} onChange={e=>setProfile({...profile, name:e.target.value})} className="w-full border p-2 rounded bg-slate-50 disabled:text-slate-500" placeholder="Nama" />
+                            <input disabled={!editMode} value={profile.phone} onChange={e=>setProfile({...profile, phone:e.target.value})} className="w-full border p-2 rounded bg-slate-50 disabled:text-slate-500" placeholder="No. WA" />
+                            <input type="date" disabled={!editMode} value={profile.dob} onChange={e=>setProfile({...profile, dob:e.target.value})} className="w-full border p-2 rounded bg-slate-50 disabled:text-slate-500" />
+                            <textarea disabled={!editMode} value={profile.address} onChange={e=>setProfile({...profile, address:e.target.value})} className="w-full border p-2 rounded bg-slate-50 disabled:text-slate-500" rows="2" placeholder="Alamat"></textarea>
+                            {editMode && <button onClick={saveProfile} className="bg-green-600 text-white px-4 py-2 rounded font-bold w-full">Simpan</button>}
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm">
+                        <h3 className="font-bold text-lg mb-4">Ganti Kata Sandi</h3>
+                        <div className="space-y-3">
+                            <input type="password" placeholder="Sandi Lama" value={pass.cur} onChange={e=>setPass({...pass, cur:e.target.value})} className="w-full border p-2 rounded" />
+                            <input type="password" placeholder="Sandi Baru (Min 8 char, a-z, 0-9)" value={pass.new} onChange={e=>setPass({...pass, new:e.target.value})} className="w-full border p-2 rounded" />
+                            <button onClick={savePass} className="bg-slate-900 text-white px-4 py-2 rounded font-bold w-full">Ubah Sandi</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. ORDERS VIEW
+        const OrdersView = ({ orders, setOrders }) => {
+            const [showReviewModal, setShowReviewModal] = useState(false);
+            const [currentReviewOrderId, setCurrentReviewOrderId] = useState(null);
+            const [reviewData, setReviewData] = useState({ rating: 5, text: "" });
+
+            const submitReview = () => {
+                const updatedOrders = orders.map(o => {
+                    if(o.id === currentReviewOrderId) return { ...o, hasReview: true, userReview: reviewData };
+                    return o;
+                });
+                setOrders(updatedOrders);
+                setShowReviewModal(false);
+                setReviewData({ rating: 5, text: "" });
+                alert("Ulasan berhasil dikirim!");
+            };
+
+            return (
+                <div className="max-w-3xl mx-auto px-4 py-8 fade-in">
+                    <h2 className="text-2xl font-bold mb-6">Riwayat Pesanan</h2>
+                    <div className="space-y-4">
+                        {orders.map(o => (
+                            <div key={o.id} className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-bold">{o.storeName}</h4>
+                                        <p className="text-xs text-slate-500">{o.id}</p>
+                                    </div>
+                                    <div className="flex flex-col items-end">
+                                        <div className="flex gap-1">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${o.status === 'Selesai' ? 'bg-slate-100 text-slate-700' : (o.status.includes('Terlambat') ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700')}`}>{o.status}</span>
+                                            {o.paymentStatus.includes('Denda') || o.paymentStatus === 'Belum Lunas' ? (
+                                                <span className="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700">{o.paymentStatus}</span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">{o.paymentStatus}</span>
+                                            )}
+                                        </div>
+                                        
+                                        {o.status === 'Selesai' && !o.hasReview && (
+                                            <button 
+                                                onClick={() => { setCurrentReviewOrderId(o.id); setShowReviewModal(true); }}
+                                                className="mt-2 text-xs font-bold text-blue-600 border border-blue-200 px-3 py-1 rounded hover:bg-blue-50"
+                                            >
+                                                Beri Ulasan
+                                            </button>
+                                        )}
+                                        {o.hasReview && <span className="text-xs text-slate-400 mt-1"><i className="fas fa-check"></i> Sudah diulas</span>}
+                                        {o.paymentStatus === 'Belum Lunas' && (
+                                            <span className="text-xs text-red-500 mt-1 font-bold animate-pulse"><i className="fas fa-exclamation-circle"></i> Segera kembalikan!</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="border-t border-b py-2 space-y-1">
+                                    {o.items.map((i,x) => (
+                                        <div key={x} className="flex justify-between text-sm">
+                                            <span>{i.name} x{i.qty}</span>
+                                            <span>{formatRupiah(i.price*i.qty)}</span>
+                                        </div>
+                                    ))}
+                                    {o.fine > 0 && (
+                                        <div className="flex justify-between text-sm text-red-600 font-medium">
+                                            <span>Denda Keterlambatan</span>
+                                            <span>{formatRupiah(o.fine)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <div className="text-xs text-slate-500">
+                                        <p>Ambil: {formatDateIndo(o.pickupDate)}</p>
+                                        <p>Kembali: {o.dueDate}</p>
+                                    </div>
+                                    <p className="font-bold text-green-600">{formatRupiah(o.totalPrice + o.fine)}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Review Modal */}
+                    {showReviewModal && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl p-6 w-full max-w-sm animate-fade-in">
+                                <h3 className="text-lg font-bold mb-4">Ulas Pesanan</h3>
+                                <div className="flex justify-center gap-2 mb-4 text-2xl text-slate-300">
+                                    {[1,2,3,4,5].map(star => (
+                                        <i 
+                                            key={star} 
+                                            className={`fas fa-star cursor-pointer ${star <= reviewData.rating ? 'text-yellow-400' : ''}`}
+                                            onClick={() => setReviewData({...reviewData, rating: star})}
+                                        ></i>
+                                    ))}
+                                </div>
+                                <textarea 
+                                    className="w-full border p-3 rounded-xl mb-4" 
+                                    rows="3" 
+                                    placeholder="Bagaimana pengalamanmu?"
+                                    value={reviewData.text}
+                                    onChange={e => setReviewData({...reviewData, text: e.target.value})}
+                                ></textarea>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setShowReviewModal(false)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-slate-600">Batal</button>
+                                    <button onClick={submitReview} className="flex-1 py-2 bg-slate-900 rounded-xl font-bold text-white">Kirim</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // 4. MAIN APP CONTAINER
+        const MainApp = () => {
+            const [view, setView] = useState('home'); 
+            const [userProfile, setUserProfile] = useState(USER_PROFILE_MOCK);
+            const [searchQuery, setSearchQuery] = useState("");
+            const [selectedCategory, setSelectedCategory] = useState("Semua");
+            const [selectedStore, setSelectedStore] = useState(null);
+            
+            // HOME FILTERS
+            const [storeSort, setStoreSort] = useState("closest");
+            const [homeItemCategory, setHomeItemCategory] = useState("Semua");
+
+            // SELECTION
+            const [selection, setSelection] = useState({ storeId: null, items: [] });
+
+            // CHECKOUT STATES
+            const [pickupDate, setPickupDate] = useState(new Date().toISOString().split('T')[0]);
+            const [duration, setDuration] = useState(1);
+            const [paymentType, setPaymentType] = useState('full');
+            const [paymentMethod, setPaymentMethod] = useState('qris');
+            const [activeOrder, setActiveOrder] = useState(null);
+
+            // ORDER DATA (Including New Scenarios)
+            const [orders, setOrders] = useState([
+                { id: 'CMP-8821', storeName: 'Camply Official Store', items: [{name: "Tenda Arei", qty: 1, price: 50000}], pickupDate: '2023-10-15', dueDate: '2023-10-16', status: 'Selesai', paymentStatus: 'Lunas', fine: 0, totalPrice: 50000, hasReview: false },
+                { id: 'MTB-9932', storeName: 'Mount Trekker Bali', items: [{name: "Carrier Eiger", qty: 1, price: 45000}], pickupDate: '2023-11-01', dueDate: '2023-11-02', status: 'Selesai', paymentStatus: 'Lunas + Denda', fine: 22500, totalPrice: 45000, hasReview: true, userReview: {rating: 4, text: "Barang oke, saya telat balikin kena 50%"} },
+                { id: 'AGS-1123', storeName: 'Adventure Gear SGR', items: [{name: "Kompor Portable", qty: 2, price: 20000}], pickupDate: '2023-12-05', dueDate: '2023-12-06', status: 'Terlambat', paymentStatus: 'Belum Lunas', fine: 80000, totalPrice: 40000, hasReview: false }
+            ]);
+
+            // --- FUNCTIONS ---
+            const updateSelection = (storeId, item, change) => {
+                if (selection.storeId && selection.storeId !== storeId && selection.items.length > 0) {
+                    if (!confirm("Ganti toko akan mereset pilihan. Lanjut?")) return;
+                    setSelection({ storeId: storeId, items: [] });
+                }
+                let currentItems = (selection.storeId === storeId) ? [...selection.items] : [];
+                const itemIndex = currentItems.findIndex(i => i.id === item.id);
+                if (itemIndex > -1) {
+                    const newItem = { ...currentItems[itemIndex] };
+                    newItem.qty += change;
+                    if (newItem.qty <= 0) currentItems.splice(itemIndex, 1);
+                    else if (newItem.qty > item.max) alert(`Maksimal stok ${item.max}`);
+                    else currentItems[itemIndex] = newItem;
+                } else if (change > 0) {
+                    currentItems.push({ ...item, qty: 1 });
+                }
+                setSelection({ storeId: storeId, items: currentItems });
+            };
+
+            const calculateTotal = () => selection.items.reduce((a, b) => a + (b.price * b.qty), 0) * duration;
+            const getReturnDateTime = () => {
+                if(!selectedStore) return "";
+                const date = new Date(pickupDate);
+                date.setDate(date.getDate() + parseInt(duration));
+                const closingTime = selectedStore.hours.split(" - ")[1] || "22:00";
+                return `${date.toLocaleDateString('id-ID')} Pukul ${closingTime}`;
+            };
+
+            const processOrder = () => {
+                const newOrder = {
+                    id: `${selectedStore.id}-${Math.floor(Math.random()*9000)+1000}`,
+                    storeName: selectedStore.name,
+                    storeAddress: selectedStore.address,
+                    storeMaps: selectedStore.mapsUrl,
+                    items: selection.items,
+                    pickupDate,
+                    dueDate: getReturnDateTime(),
+                    paymentType,
+                    paymentMethod,
+                    status: 'Aktif',
+                    paymentStatus: paymentType === 'dp' ? 'DP 50%' : 'Lunas',
+                    totalPrice: calculateTotal(),
+                    paidAmount: paymentType === 'dp' ? calculateTotal() * 0.5 : calculateTotal(),
+                    fine: 0,
+                    hasReview: false
+                };
+                setOrders([newOrder, ...orders]);
+                setActiveOrder(newOrder);
+                setSelection({ storeId: null, items: [] });
+                setView('success');
+            };
+
+            // --- RENDER HELPERS ---
+            const BannerSlider = () => (
+                <div className="mb-8 overflow-hidden rounded-2xl shadow-lg relative h-48 md:h-64">
+                    <div className="flex transition-transform duration-500 h-full w-full">
+                        {BANNERS.map(banner => (
+                            <div key={banner.id} className="min-w-full h-full relative shrink-0">
+                                <img src={banner.image} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent flex flex-col justify-center px-8 text-white">
+                                    {banner.isAd && <span className="bg-yellow-400 text-slate-900 text-xs font-bold px-2 py-1 rounded w-fit mb-2">IKLAN</span>}
+                                    <h2 className="text-2xl md:text-4xl font-bold mb-2">{banner.title}</h2>
+                                    <p className="text-sm md:text-lg opacity-90">{banner.subtitle}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            // --- VIEW RENDERERS ---
+            const renderHome = () => {
+                let allItems = STORES.flatMap(store => store.items.map(item => ({...item, storeId: store.id, storeName: store.name})));
+                if (homeItemCategory !== "Semua") allItems = allItems.filter(item => item.category === homeItemCategory);
+                let filteredStores = STORES.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                if (storeSort === "closest") filteredStores.sort((a,b) => a.distance - b.distance);
+                if (storeSort === "rating") filteredStores.sort((a,b) => b.rating - a.rating);
+                const categories = ["Semua", ...new Set(allItems.map(i => i.category))];
+
+                return (
+                    <div className="max-w-7xl mx-auto px-4 py-6 fade-in pb-16">
+                        <BannerSlider />
+                        <div className="relative mb-8">
+                            <i className="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                            <input type="text" className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-200 shadow-sm focus:ring-2 focus:ring-green-500" placeholder="Cari toko atau alat..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} />
+                        </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-slate-800">Pilih Toko Penyewaan</h2>
+                            <select value={storeSort} onChange={(e) => setStoreSort(e.target.value)} className="text-sm border border-slate-200 rounded-lg p-2 bg-white"><option value="closest">Terdekat</option><option value="rating">Rating Tertinggi</option></select>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                            {filteredStores.map(store => (
+                                <div key={store.id} onClick={() => setSelectedStore(store)} className="bg-white rounded-2xl border border-slate-100 overflow-hidden cursor-pointer store-card">
+                                    <div className="h-32 bg-slate-200 relative">
+                                        <img src={store.image} className="w-full h-full object-cover" />
+                                        <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs"><i className="fas fa-star text-yellow-400"></i> {store.rating}</div>
+                                    </div>
+                                    <div className="p-4">
+                                        <h3 className="font-bold text-lg mb-1">{store.name}</h3>
+                                        <p className="text-xs text-slate-500 line-clamp-2 mb-2">{store.description}</p>
+                                        <div className="flex items-center gap-2 text-xs text-slate-400"><i className="fas fa-map-marker-alt"></i> {store.distance} km • {store.hours}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-800 mb-4">Rekomendasi Alat</h2>
+                        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 hide-scrollbar">
+                            {categories.map(cat => (
+                                <button key={cat} onClick={() => setHomeItemCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${homeItemCategory === cat ? 'bg-slate-800 text-white' : 'bg-white border text-slate-600 hover:bg-slate-50'}`}>{cat}</button>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                            {allItems.slice(0, 8).map((item, idx) => (
+                                <div key={idx} onClick={() => setSelectedStore(STORES.find(s => s.id === item.storeId))} className="bg-white p-3 rounded-xl border border-slate-100 cursor-pointer item-card transition">
+                                    <img src={item.image} className="w-full h-32 object-cover rounded-lg mb-2" />
+                                    <h4 className="font-bold text-sm truncate">{item.name}</h4>
+                                    <p className="text-green-600 font-bold text-xs">{formatRupiah(item.price)}</p>
+                                    <p className="text-[10px] text-slate-400 mt-1"><i className="fas fa-store"></i> {item.storeName}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-200">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Apa Kata Mereka?</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {TESTIMONIALS.map((testi, idx) => (
+                                    <div key={idx} className="bg-slate-50 p-6 rounded-2xl testimonial-card">
+                                        <div className="flex text-yellow-400 text-xs mb-2">{[...Array(testi.rating)].map((_,i) => <i key={i} className="fas fa-star"></i>)}</div>
+                                        <p className="text-slate-600 text-sm mb-4 italic">"{testi.text}"</p>
+                                        <div><p className="font-bold text-slate-800 text-sm">{testi.name}</p><p className="text-xs text-green-600 font-medium">{testi.store}</p></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderStoreDetail = () => {
+                const categories = ["Semua", ...new Set(selectedStore.items.map(i => i.category))];
+                const filteredItems = selectedStore.items.filter(i => selectedCategory === "Semua" || i.category === selectedCategory);
+                const currentSelection = selection.storeId === selectedStore.id ? selection.items : [];
+                const totalItems = currentSelection.reduce((a,b) => a+b.qty, 0);
+
+                return (
+                    <div className="max-w-7xl mx-auto px-4 py-6 fade-in pb-24">
+                        <button onClick={() => setSelectedStore(null)} className="mb-4 text-slate-500 font-bold"><i className="fas fa-arrow-left"></i> Kembali</button>
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border mb-6 flex flex-col md:flex-row gap-6">
+                            <img src={selectedStore.image} className="w-full md:w-48 h-32 object-cover rounded-xl" />
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800">{selectedStore.name}</h1>
+                                <p className="text-slate-600 text-sm mt-2">{selectedStore.description}</p>
+                                <div className="mt-4 flex gap-4 text-sm text-slate-500">
+                                    <span><i className="far fa-clock text-blue-500"></i> {selectedStore.hours}</span>
+                                    <span><i className="fas fa-map-marker-alt text-red-500"></i> {selectedStore.address}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 hide-scrollbar">
+                            {categories.map(cat => (
+                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${selectedCategory === cat ? 'bg-slate-900 text-white' : 'bg-white border text-slate-600'}`}>{cat}</button>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredItems.map(item => {
+                                const inCart = currentSelection.find(i => i.id === item.id);
+                                const qty = inCart ? inCart.qty : 0;
+                                return (
+                                    <div key={item.id} className="bg-white p-4 rounded-xl border flex gap-4">
+                                        <img src={item.image} className="w-20 h-20 object-cover rounded-lg" />
+                                        <div className="flex-1 flex flex-col justify-between">
+                                            <div><h4 className="font-bold text-slate-800">{item.name}</h4><p className="text-green-600 font-bold text-sm">{formatRupiah(item.price)}</p><p className="text-[10px] text-slate-400">Stok: {item.stock}</p></div>
+                                            <div className="flex items-center gap-3 self-end">
+                                                <button onClick={() => updateSelection(selectedStore.id, item, -1)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200" disabled={qty===0}>-</button>
+                                                <span className="font-bold w-4 text-center">{qty}</span>
+                                                <button onClick={() => updateSelection(selectedStore.id, item, 1)} className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800" disabled={qty>=item.max}>+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {totalItems > 0 && (
+                            <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+                                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                                    <div><p className="text-xs text-slate-500">Estimasi Total ({totalItems} item)</p><p className="font-bold text-lg text-green-600">{formatRupiah(currentSelection.reduce((a,b)=>a+(b.price*b.qty),0))}</p></div>
+                                    <button onClick={() => setView('checkout')} className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-green-700">Lanjut Bayar</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const renderCheckout = () => {
+                const total = calculateTotal();
+                const payable = paymentType === 'dp' ? total * 0.5 : total;
+                return (
+                    <div className="max-w-3xl mx-auto px-4 py-8 fade-in">
+                        <button onClick={() => setView('home')} className="text-slate-500 font-bold mb-6"><i className="fas fa-arrow-left"></i> Batal</button>
+                        <h2 className="text-2xl font-bold mb-6">Konfirmasi Sewa</h2>
+                        <div className="bg-orange-50 p-4 rounded-xl border border-orange-200 mb-6 text-sm text-orange-800">
+                            <h4 className="font-bold mb-2 flex items-center gap-2"><i className="fas fa-exclamation-circle"></i> Aturan & Denda Sewa</h4>
+                            <ul className="list-disc ml-4 space-y-1">
+                                <li>Wajib titip ID Card Asli (KTP/SIM) saat ambil barang.</li>
+                                <li>Kerusakan barang menjadi tanggung jawab penyewa.</li>
+                                <li>DP Hangus jika barang tidak diambil sesuai tanggal.</li>
+                                <li className="font-bold mt-2">Denda Keterlambatan Pengembalian:</li>
+                                <ul className="list-disc ml-4 text-orange-700">
+                                    <li>Lewat tgl, dikembalikan sebelum jam 12:00: <b>Denda 50%</b> harga sewa harian.</li>
+                                    <li>Lewat tgl, dikembalikan lewat jam 12:00: <b>Denda 100%</b> harga sewa harian.</li>
+                                </ul>
+                            </ul>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-xl border shadow-sm">
+                                <h3 className="font-bold mb-4">Detail Waktu</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="block text-xs mb-1">Tanggal Ambil</label><input type="date" value={pickupDate} min={new Date().toISOString().split('T')[0]} onChange={e=>setPickupDate(e.target.value)} className="w-full border p-2 rounded-lg" /></div>
+                                    <div><label className="block text-xs mb-1">Durasi (Hari)</label><input type="number" min="1" max="7" value={duration} onChange={e=>setDuration(e.target.value)} className="w-full border p-2 rounded-lg" /></div>
+                                </div>
+                                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-sm flex justify-between"><span>Wajib Kembali:</span><span className="font-bold text-red-600">{getReturnDateTime()}</span></div>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl border shadow-sm">
+                                <h3 className="font-bold mb-4">Pembayaran</h3>
+                                <div className="flex gap-4 mb-4">
+                                    <button onClick={()=>setPaymentType('full')} className={`flex-1 p-3 border rounded-xl font-bold text-sm ${paymentType==='full'?'bg-green-50 border-green-500 text-green-700':'bg-white'}`}>Lunas (100%)</button>
+                                    <button onClick={()=>setPaymentType('dp')} className={`flex-1 p-3 border rounded-xl font-bold text-sm ${paymentType==='dp'?'bg-green-50 border-green-500 text-green-700':'bg-white'}`}>DP (50%)</button>
+                                </div>
+                                <div className="flex gap-4 mb-6">
+                                    <button onClick={()=>setPaymentMethod('qris')} className={`flex-1 p-3 border rounded-xl font-bold text-sm flex items-center justify-center gap-2 ${paymentMethod==='qris'?'border-slate-800 bg-slate-800 text-white':'bg-white'}`}><i className="fas fa-qrcode"></i> QRIS</button>
+                                    <button onClick={()=>setPaymentMethod('transfer')} className={`flex-1 p-3 border rounded-xl font-bold text-sm flex items-center justify-center gap-2 ${paymentMethod==='transfer'?'border-blue-600 bg-blue-600 text-white':'bg-white'}`}><i className="fas fa-university"></i> Transfer</button>
+                                </div>
+                                <div className="border-t pt-4 flex justify-between items-center">
+                                    <div><p className="text-xs text-slate-500">Total Tagihan ({paymentType.toUpperCase()})</p><p className="text-2xl font-bold text-slate-800">{formatRupiah(payable)}</p></div>
+                                    <button onClick={processOrder} className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800">Bayar Sekarang</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderSuccess = () => (
+                <div className="max-w-2xl mx-auto px-4 py-12 text-center fade-in">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"><i className="fas fa-check"></i></div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Pembayaran Berhasil!</h2>
+                    <p className="text-slate-500 mb-8">Pesanan Anda di <b>{activeOrder?.storeName}</b> telah dikonfirmasi.</p>
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-left mb-6">
+                        <div className="flex gap-3">
+                            <i className="fab fa-whatsapp text-2xl text-green-600 mt-1"></i>
+                            <div><h4 className="font-bold text-blue-900">Cek WhatsApp Anda</h4><p className="text-sm text-blue-800">Invoice lengkap dan Reminder H-1 pengembalian akan dikirim otomatis ke nomor Anda.</p></div>
+                        </div>
+                    </div>
+                    <div className="bg-white border rounded-xl overflow-hidden text-left shadow-sm">
+                        <div className="p-4 bg-slate-50 border-b"><h4 className="font-bold text-slate-800">Lokasi Pengambilan</h4></div>
+                        <div className="relative h-48 bg-slate-200">
+                            {/* Static Map Image Placeholder */}
+                            <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover opacity-80" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <a href={activeOrder?.storeMaps} target="_blank" className="bg-white text-slate-800 px-4 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 hover:text-white flex items-center gap-2"><i className="fas fa-location-arrow"></i> Buka Peta</a>
+                            </div>
+                        </div>
+                        <div className="p-4">
+                            <p className="font-bold text-slate-800 mb-1">{activeOrder?.storeName}</p>
+                            <p className="text-sm text-slate-500">{activeOrder?.storeAddress}</p>
+                        </div>
+                    </div>
+                    <button onClick={() => {setView('home'); setSelectedStore(null);}} className="mt-8 text-slate-500 font-bold hover:text-slate-800">Kembali ke Beranda</button>
+                </div>
+            );
+
+            // --- MAIN SWITCHER ---
+            const renderContent = () => {
+                if (view === 'home' && !selectedStore) return renderHome();
+                if (view === 'home' && selectedStore) return renderStoreDetail();
+                if (view === 'checkout') return renderCheckout();
+                if (view === 'success') return renderSuccess();
+                if (view === 'profile') return <ProfileView userProfile={userProfile} setUserProfile={setUserProfile} />;
+                if (view === 'orders') return <OrdersView orders={orders} setOrders={setOrders} />;
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col font-sans text-slate-800 pb-20 md:pb-0">
+                    <nav className="sticky top-0 z-40 glass hidden md:block px-8 py-4">
+                        <div className="max-w-7xl mx-auto flex justify-between items-center">
+                            <span onClick={() => {setView('home'); setSelectedStore(null);}} className="text-2xl font-black cursor-pointer">CAMPLY<span className="text-green-600">.ID</span></span>
+                            <div className="flex gap-6 font-medium text-slate-500">
+                                <button onClick={() => {setView('home'); setSelectedStore(null);}} className={`hover:text-green-600 ${view === 'home' ? 'text-green-600' : ''}`}>Beranda</button>
+                                <button onClick={() => setView('orders')} className={`hover:text-green-600 ${view === 'orders' ? 'text-green-600' : ''}`}>Pesanan</button>
+                                <button onClick={() => setView('profile')} className={`hover:text-green-600 ${view === 'profile' ? 'text-green-600' : ''}`}>Profil</button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <main className="flex-grow bg-slate-50">
+                        {renderContent()}
+                    </main>
+
+                    {/* Mobile Nav */}
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 px-6 py-3 flex justify-between text-xs text-slate-500 font-medium">
+                        <div onClick={() => {setView('home'); setSelectedStore(null);}} className={`flex flex-col items-center ${view === 'home' ? 'text-green-600' : ''}`}><i className="fas fa-home text-lg mb-1"></i> Home</div>
+                        <div onClick={() => setView('orders')} className={`flex flex-col items-center ${view === 'orders' ? 'text-green-600' : ''}`}><i className="fas fa-receipt text-lg mb-1"></i> Pesanan</div>
+                        <div onClick={() => setView('profile')} className={`flex flex-col items-center ${view === 'profile' ? 'text-green-600' : ''}`}><i className="fas fa-user text-lg mb-1"></i> Profil</div>
+                    </nav>
+                </div>
+            );
+        };
+
+        const Root = () => {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            return isLoggedIn ? <MainApp /> : <AuthScreen onLogin={() => setIsLoggedIn(true)} />;
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+    </script>
+</body>
+</html>
